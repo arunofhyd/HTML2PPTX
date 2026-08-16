@@ -1,0 +1,77 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'version.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Version from version.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Extract Changelog
+        id: get_changelog
+        run: |
+          CHANGELOG=$(jq -r --arg v "$VERSION" '.changelog[] | select(.version == $v) | .changes[] | "- " + .' version.json)
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Check if Release Exists
+        id: check_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "v${{ env.VERSION }}" > /dev/null 2>&1; then
+            echo "Release v${{ env.VERSION }} already exists. Skipping build and release."
+            echo "skip=true" >> $GITHUB_ENV
+          else
+            echo "skip=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build App (CI Mode)
+        if: env.skip == 'false'
+        env:
+          CI: "true"
+        run: |
+          chmod +x install-html2pptx.command
+          ./install-html2pptx.command
+
+      - name: Zip the App
+        if: env.skip == 'false'
+        run: |
+          cd Build
+          zip -r ../HTML2PPTX.zip "HTML to PPTX Converter.app"
+          cd ..
+
+      - name: Create Release
+        if: env.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ env.VERSION }}" HTML2PPTX.zip \
+            --title "v${{ env.VERSION }}" \
+            --notes "${{ env.CHANGELOG }}" \
+            --target "$GITHUB_SHA"
+
+      - name: Calculate SHA256
+        if: env.skip == 'false'
+        id: calc_sha
+        run: |
+          SHA256=$(shasum -a 256 HTML2PPTX.zip | awk '{ print $1 }')
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+          echo "Computed SHA256: $SHA256"

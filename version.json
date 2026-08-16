@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "downloadURL": "https://github.com/arunofhyd/HTML2PPTX/releases/latest",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "changes": [
+        "High-Performance Native macOS SwiftUI Application with Ultra 4K Puppeteer engine.",
+        "Adaptive Apple Silicon Multi-Core Concurrency: Dynamically runs up to 3 parallel conversion engines based on CPU, RAM, and thermal load.",
+        "Batch Folder & Multi-File Drag-and-Drop: Converts entire folders of HTML presentations simultaneously.",
+        "Exact 1-to-1 Filename Mapping: Generates output PowerPoint decks directly inside the source folder.",
+        "100% On-Device Privacy: Zero cloud uploads, zero telemetry, fully self-contained local conversion pipeline.",
+        "Native macOS Notifications with official high-res brand artwork."
+      ]
+    }
+  ]
+}

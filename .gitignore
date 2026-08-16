@@ -1,0 +1,12 @@
+.DS_Store
+*.swp
+*~
+Build/
+*.zip
+*.app
+node_modules/
+.cache/
+*.pptx
+slides/
+__pycache__/
+*.pyc
