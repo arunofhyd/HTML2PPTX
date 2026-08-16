@@ -2,21 +2,21 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-APP_TARGET="/Users/arunthomas/Downloads/Presentation/HTML to PPTX Converter.app"
+APP_TARGET="/Users/arunthomas/Downloads/Presentation/HTML2PPTX.app"
 
 # Single Source of Truth: Read version from version.json
 VERSION=$(python3 -c "import json, os; p = '$DIR/version.json' if os.path.exists('$DIR/version.json') else '/Users/arunthomas/HTML2PPTX/version.json'; print(json.load(open(p))['version'])" 2>/dev/null || echo "1.0.0")
-echo "🔖 Building HTML to PPTX Converter v$VERSION..."
+echo "🔖 Building HTML2PPTX v$VERSION..."
 
 echo "🔨 Compiling SwiftUI Binary..."
-swiftc -O -parse-as-library "$DIR/ConverterApp.swift" -o "$DIR/HTMLToPPTXConverter"
+swiftc -O -parse-as-library "$DIR/ConverterApp.swift" -o "$DIR/HTML2PPTX"
 
 echo "📦 Assembling .app bundle at $APP_TARGET..."
-rm -rf "$APP_TARGET"
+rm -rf "$APP_TARGET" "/Users/arunthomas/Downloads/Presentation/HTML to PPTX Converter.app"
 mkdir -p "$APP_TARGET/Contents/MacOS"
 mkdir -p "$APP_TARGET/Contents/Resources"
 
-cp "$DIR/HTMLToPPTXConverter" "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
+cp "$DIR/HTML2PPTX" "$APP_TARGET/Contents/MacOS/HTML2PPTX"
 cp "$DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"
 
 # Stamp Info.plist with version from version.json
@@ -29,9 +29,13 @@ cp "$DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"
 cp "/Users/arunthomas/.gemini/antigravity-ide/scratch/converter_core.py" "$APP_TARGET/Contents/Resources/converter_core.py"
 cp "$DIR/AppIcon.icns" "$APP_TARGET/Contents/Resources/AppIcon.icns" 2>/dev/null || true
 cp "$DIR/AppLogo.png" "$APP_TARGET/Contents/Resources/AppLogo.png" 2>/dev/null || true
+cp "$DIR/AppIcon.png" "$APP_TARGET/Contents/Resources/AppIcon.png" 2>/dev/null || true
 cp "$DIR/logo.svg" "$APP_TARGET/Contents/Resources/logo.svg" 2>/dev/null || true
 
-chmod +x "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
+chmod +x "$APP_TARGET/Contents/MacOS/HTML2PPTX"
 chmod +x "$APP_TARGET/Contents/Resources/converter_core.py"
 
-echo "✨ Native Swift App v$VERSION successfully built!"
+# Also symlink for compatibility
+ln -s "$APP_TARGET" "/Users/arunthomas/Downloads/Presentation/HTML to PPTX Converter.app" 2>/dev/null || true
+
+echo "✨ Native Swift App HTML2PPTX v$VERSION successfully built!"

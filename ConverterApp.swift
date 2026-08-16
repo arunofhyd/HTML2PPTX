@@ -570,28 +570,42 @@ struct ContentView: View {
     }
 }
 
+func getBrandLogo(size: CGFloat) -> NSImage? {
+    if let path = Bundle.main.path(forResource: "AppLogo", ofType: "png"),
+       let img = NSImage(contentsOfFile: path) {
+        img.size = NSSize(width: size, height: size)
+        return img
+    }
+    if let path = Bundle.main.path(forResource: "AppIcon", ofType: "png"),
+       let img = NSImage(contentsOfFile: path) {
+        img.size = NSSize(width: size, height: size)
+        return img
+    }
+    let fallbackCandidate = Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/AppLogo.png").path
+    if FileManager.default.fileExists(atPath: fallbackCandidate),
+       let img = NSImage(contentsOfFile: fallbackCandidate) {
+        img.size = NSSize(width: size, height: size)
+        return img
+    }
+    if let appIcon = NSApplication.shared.applicationIconImage {
+        appIcon.size = NSSize(width: size, height: size)
+        return appIcon
+    }
+    return nil
+}
+
 struct HeaderView: View {
     @ObservedObject var model: ConverterViewModel
     @Binding var showAbout: Bool
 
-    private var logoImage: NSImage? {
-        if let path = Bundle.main.path(forResource: "AppLogo", ofType: "png"),
-           let img = NSImage(contentsOfFile: path) {
-            img.size = NSSize(width: 44, height: 44)
-            return img
-        }
-        return nil
-    }
-
     var body: some View {
         HStack(spacing: 14) {
-            if let logo = logoImage {
+            if let logo = getBrandLogo(size: 44) {
                 Image(nsImage: logo)
                     .resizable()
                     .interpolation(.high)
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 44, height: 44)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             } else {
                 ZStack {
                     Circle()
@@ -1034,34 +1048,24 @@ struct AboutSheetView: View {
     @ObservedObject var model: ConverterViewModel
     @Binding var isPresented: Bool
 
-    private var logoImage: NSImage? {
-        if let path = Bundle.main.path(forResource: "AppLogo", ofType: "png"),
-           let img = NSImage(contentsOfFile: path) {
-            img.size = NSSize(width: 64, height: 64)
-            return img
-        }
-        return nil
-    }
-
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 11) {
             // Centered Header with App Icon, Title & Subtitle
-            VStack(spacing: 10) {
-                if let logo = logoImage {
+            VStack(spacing: 6) {
+                if let logo = getBrandLogo(size: 52) {
                     Image(nsImage: logo)
                         .resizable()
                         .interpolation(.high)
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                        .frame(width: 52, height: 52)
                 }
 
-                VStack(spacing: 3) {
+                VStack(spacing: 2) {
                     Text("HTML to PPTX Converter")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
 
                     Text("Version \(appVersion)")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(.secondary)
 
                     Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
@@ -1075,7 +1079,7 @@ struct AboutSheetView: View {
             Divider()
 
             // Info Details Card
-            VStack(alignment: .leading, spacing: 9) {
+            VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
                     Image(systemName: "person.crop.circle.fill")
                         .foregroundColor(.orange)
@@ -1116,23 +1120,21 @@ struct AboutSheetView: View {
                         .foregroundColor(.orange)
                 }
             }
-            .font(.system(size: 12))
+            .font(.system(size: 11.5))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
             .background(Color.primary.opacity(0.04))
             .clipShape(RoundedRectangle(cornerRadius: 10))
 
             // Update Status if present
             if let status = model.updateStatus {
                 Text(status)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10.5, weight: .medium))
                     .foregroundColor(model.newerVersionAvailable ? .orange : .secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
-
-            Spacer(minLength: 4)
 
             // Bottom Action Bar
             HStack {
@@ -1145,7 +1147,7 @@ struct AboutSheetView: View {
                         }
                         Text(model.isCheckingForUpdates ? "Checking..." : "Check for Updates")
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 11.5, weight: .medium))
                 }
                 .disabled(model.isCheckingForUpdates)
 
@@ -1157,7 +1159,7 @@ struct AboutSheetView: View {
                             Image(systemName: "arrow.down.circle.fill")
                             Text("Download Update")
                         }
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 11.5, weight: .medium))
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.orange)
@@ -1167,12 +1169,14 @@ struct AboutSheetView: View {
                     isPresented = false
                 }
                 .keyboardShortcut(.defaultAction)
+                .keyboardShortcut(.cancelAction)
                 .buttonStyle(.borderedProminent)
                 .tint(model.newerVersionAvailable ? .secondary : .orange)
             }
+            .padding(.top, 2)
         }
-        .padding(22)
-        .frame(width: 440, height: 380)
+        .padding(18)
+        .frame(width: 420, height: 320)
     }
 }
 

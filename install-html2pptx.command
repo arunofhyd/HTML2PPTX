@@ -10,8 +10,8 @@
 
 set -e
 
-APP_NAME="HTML to PPTX Converter"
-BUNDLE_NAME="HTML to PPTX Converter.app"
+APP_NAME="HTML2PPTX"
+BUNDLE_NAME="HTML2PPTX.app"
 REPO_RAW="https://raw.githubusercontent.com/arunofhyd/HTML2PPTX/main"
 
 # ---- Clean, Tasteful Orange Brand Terminal Styling -------------------------
@@ -29,7 +29,7 @@ if [ "$CI" != "true" ]; then
 fi
 
 printf "\n"
-printf "${ORANGE}${BOLD}   HTML to PPTX Converter${NC}\n"
+printf "${ORANGE}${BOLD}   HTML2PPTX${NC}\n"
 printf "${GREY}   High-Performance 4K PowerPoint Engine for macOS${NC}\n"
 printf "${GREY}   Built with ❤️ by Arun Thomas · https://github.com/arunofhyd/HTML2PPTX${NC}\n\n"
 line
@@ -96,8 +96,10 @@ else
     curl -fsSL "$REPO_RAW/Info.plist" -o "$SRC_DIR/Info.plist"
     curl -fsSL "$REPO_RAW/converter_core.py" -o "$SRC_DIR/converter_core.py"
     curl -fsSL "$REPO_RAW/AppIcon.icns" -o "$SRC_DIR/AppIcon.icns" 2>/dev/null || true
+    curl -fsSL "$REPO_RAW/AppLogo.png" -o "$SRC_DIR/AppLogo.png" 2>/dev/null || true
     curl -fsSL "$REPO_RAW/AppIcon.png" -o "$SRC_DIR/AppIcon.png" 2>/dev/null || true
     curl -fsSL "$REPO_RAW/logo.svg" -o "$SRC_DIR/logo.svg" 2>/dev/null || true
+    curl -fsSL "$REPO_RAW/version.json" -o "$SRC_DIR/version.json" 2>/dev/null || true
 fi
 
 mkdir -p "$BUILD_DIR"
@@ -105,8 +107,8 @@ APP_TARGET="$BUILD_DIR/$BUNDLE_NAME"
 
 # ---- Step 5: Native Compilation --------------------------------------------
 step "Compiling Native SwiftUI Application (Apple Silicon / Intel)..."
-swiftc -O -parse-as-library "$SRC_DIR/ConverterApp.swift" -o "$BUILD_DIR/HTMLToPPTXConverter"
-ok "Compiled native binary HTMLToPPTXConverter"
+swiftc -O -parse-as-library "$SRC_DIR/ConverterApp.swift" -o "$BUILD_DIR/HTML2PPTX"
+ok "Compiled native binary HTML2PPTX"
 
 # ---- Step 6: App Bundle Packaging ------------------------------------------
 step "Packaging $BUNDLE_NAME..."
@@ -117,7 +119,7 @@ mkdir -p "$APP_TARGET/Contents/Resources"
 # Single Source of Truth: Read version from version.json
 VERSION=$(python3 -c "import json, os; p = '$SRC_DIR/version.json'; print(json.load(open(p))['version']) if os.path.exists(p) else print('1.0.0')" 2>/dev/null || echo "1.0.0")
 
-cp "$BUILD_DIR/HTMLToPPTXConverter" "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
+cp "$BUILD_DIR/HTML2PPTX" "$APP_TARGET/Contents/MacOS/HTML2PPTX"
 cp "$SRC_DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"
 
 # Stamp Info.plist with version from version.json
@@ -129,10 +131,11 @@ cp "$SRC_DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"
 
 cp "$SRC_DIR/converter_core.py" "$APP_TARGET/Contents/Resources/converter_core.py"
 cp "$SRC_DIR/AppIcon.icns" "$APP_TARGET/Contents/Resources/AppIcon.icns" 2>/dev/null || true
-cp "$SRC_DIR/AppIcon.png" "$APP_TARGET/Contents/Resources/AppLogo.png" 2>/dev/null || true
+cp "$SRC_DIR/AppLogo.png" "$APP_TARGET/Contents/Resources/AppLogo.png" 2>/dev/null || true
+cp "$SRC_DIR/AppIcon.png" "$APP_TARGET/Contents/Resources/AppIcon.png" 2>/dev/null || true
 cp "$SRC_DIR/logo.svg" "$APP_TARGET/Contents/Resources/logo.svg" 2>/dev/null || true
 
-chmod +x "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
+chmod +x "$APP_TARGET/Contents/MacOS/HTML2PPTX"
 chmod +x "$APP_TARGET/Contents/Resources/converter_core.py"
 ok "App bundle v$VERSION assembled at $APP_TARGET"
 
@@ -151,7 +154,7 @@ import Cocoa
 import AppKit
 
 let sourcePath = CommandLine.arguments[1]
-let appName = "HTML to PPTX Converter"
+let appName = "HTML2PPTX"
 
 func getHighResIcon(path: String) -> NSImage {
     let iconPath = (path as NSString).appendingPathComponent("Contents/Resources/AppLogo.png")
@@ -277,14 +280,14 @@ app.setActivationPolicy(.regular)
 let W: CGFloat = 620, H: CGFloat = 420
 let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: W, height: H),
                    styleMask: [.titled, .closable], backing: .buffered, defer: false)
-win.title = "Install HTML to PPTX Converter"
+win.title = "Install HTML2PPTX"
 win.center()
 
 let bg = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: W, height: H))
 bg.material = .windowBackground; bg.state = .active
 win.contentView = bg
 
-let title = NSTextField(labelWithString: "Install HTML to PPTX Converter")
+let title = NSTextField(labelWithString: "Install HTML2PPTX")
 title.frame = NSRect(x: 0, y: H - 65, width: W, height: 30)
 title.alignment = .center
 title.font = NSFont.systemFont(ofSize: 22, weight: .bold)

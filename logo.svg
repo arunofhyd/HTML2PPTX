@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
   <defs>
-    <!-- Fluid Gradient: HTML Orange -> PowerPoint Coral Red -->
     <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#F97316"/>
       <stop offset="45%" stop-color="#FB923C"/>
@@ -8,22 +7,18 @@
       <stop offset="100%" stop-color="#DC2626"/>
     </linearGradient>
   </defs>
-
-  <!-- Pure Clean White Squircle Base -->
-  <rect x="16" y="16" width="480" height="480" rx="104" fill="#FFFFFF"/>
-
-  <!-- Main Brand Mark - Pure Vibrant Colors, Zero Gray Shadows -->
-  <g transform="translate(76, 116)">
+  <!-- Centered, naturally proportioned brand mark -->
+  <g transform="translate(68, 116)">
     <!-- Left: Code Bracket < in Vibrant HTML Orange -->
-    <path d="M120 70 L40 140 L120 210" fill="none" stroke="#F97316" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M120 70 L38 140 L120 210" fill="none" stroke="#F97316" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
 
     <!-- Center: Dynamic Angled Slash Transition in Bright Orange -->
-    <path d="M185 55 L155 225" fill="none" stroke="#FB923C" stroke-width="22" stroke-linecap="round"/>
+    <path d="M195 50 L160 230" fill="none" stroke="#FB923C" stroke-width="26" stroke-linecap="round"/>
 
     <!-- Right: Modern Presentation Slide Card with Bold P -->
-    <rect x="215" y="50" width="135" height="175" rx="26" fill="url(#ribbonGrad)"/>
+    <rect x="230" y="45" width="145" height="190" rx="30" fill="url(#ribbonGrad)"/>
     
     <!-- Bold White 'P' -->
-    <text x="282" y="172" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="100" font-weight="900" fill="#FFFFFF" text-anchor="middle">P</text>
+    <text x="302" y="178" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="110" font-weight="900" fill="#FFFFFF" text-anchor="middle">P</text>
   </g>
 </svg>

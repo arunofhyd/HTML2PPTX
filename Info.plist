@@ -5,23 +5,23 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>HTMLToPPTXConverter</string>
+    <string>HTML2PPTX</string>
     <key>CFBundleIdentifier</key>
-    <string>com.arunthomas.htmltopptx</string>
+    <string>com.arunthomas.html2pptx</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>HTML to PPTX Converter</string>
+    <string>HTML2PPTX</string>
     <key>CFBundleDisplayName</key>
-    <string>HTML to PPTX Converter</string>
+    <string>HTML2PPTX</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.0.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>1.0.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
