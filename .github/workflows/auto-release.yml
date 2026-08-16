@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'version.json'
+      - '.github/workflows/auto-release.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -55,7 +57,7 @@ jobs:
         if: env.skip == 'false'
         run: |
           cd Build
-          zip -r ../HTML2PPTX.zip "HTML to PPTX Converter.app"
+          zip -r ../HTML2PPTX.zip "HTML2PPTX.app"
           cd ..
 
       - name: Create Release
