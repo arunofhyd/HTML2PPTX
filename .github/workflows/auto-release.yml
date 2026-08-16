@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'version.json'
-      - '.github/workflows/auto-release.yml'
+      - '.github/**'
   workflow_dispatch:
 
 permissions:
