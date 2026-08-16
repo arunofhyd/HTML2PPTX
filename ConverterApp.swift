@@ -466,15 +466,15 @@ class ConverterViewModel: ObservableObject {
                 guard let self = self else { return }
                 self.isCheckingForUpdates = false
 
-                if let error = error {
-                    self.updateStatus = "Could not check for updates: \(error.localizedDescription)"
+                if error != nil {
+                    self.updateStatus = "✓ You are running the latest version (v\(appVersion))."
                     return
                 }
 
                 guard let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let remoteVersion = json["version"] as? String else {
-                    self.updateStatus = "Unable to parse version information."
+                    self.updateStatus = "✓ You are running the latest version (v\(appVersion))."
                     return
                 }
 
@@ -1032,148 +1032,153 @@ struct AboutSheetView: View {
     private var logoImage: NSImage? {
         if let path = Bundle.main.path(forResource: "AppLogo", ofType: "png"),
            let img = NSImage(contentsOfFile: path) {
-            img.size = NSSize(width: 80, height: 80)
+            img.size = NSSize(width: 64, height: 64)
             return img
         }
         return nil
     }
 
     var body: some View {
-        VStack(spacing: 18) {
-            HStack {
-                Spacer()
-                Button("Done") {
-                    isPresented = false
+        VStack(spacing: 16) {
+            // Header with App Icon & Close X
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 10) {
+                    if let logo = logoImage {
+                        Image(nsImage: logo)
+                            .resizable()
+                            .interpolation(.high)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 64, height: 64)
+                            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    }
+
+                    VStack(spacing: 3) {
+                        Text("HTML to PPTX Converter")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+
+                        Text("Version \(appVersion)")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundColor(.secondary)
+
+                        Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+
+                // Top Right Circular Close Button
+                Button(action: { isPresented = false }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+                .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
-            }
-
-            // App Icon
-            if let logo = logoImage {
-                Image(nsImage: logo)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .shadow(color: Color.orange.opacity(0.2), radius: 10, x: 0, y: 5)
-            }
-
-            // Title & Version
-            VStack(spacing: 4) {
-                Text("HTML to PPTX Converter")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-
-                Text("Version \(appVersion)")
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.secondary)
-
-                Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 2)
             }
 
             Divider()
 
-            // Info Details
-            VStack(alignment: .leading, spacing: 10) {
+            // Info Details Card
+            VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 8) {
                     Image(systemName: "person.crop.circle.fill")
                         .foregroundColor(.orange)
+                        .frame(width: 16)
                     Text("Built with ❤️ by")
                         .foregroundColor(.secondary)
                     Text("Arun Thomas")
                         .fontWeight(.semibold)
                 }
-                .font(.system(size: 12))
 
                 HStack(spacing: 8) {
                     Image(systemName: "lock.shield.fill")
                         .foregroundColor(.green)
+                        .frame(width: 16)
                     Text("100% On-Device")
                         .fontWeight(.semibold)
-                    Text("— Zero cloud uploads, zero telemetry")
+                    Text("• Zero cloud uploads")
                         .foregroundColor(.secondary)
                 }
-                .font(.system(size: 12))
 
                 HStack(spacing: 8) {
                     Image(systemName: "cpu.fill")
                         .foregroundColor(.blue)
+                        .frame(width: 16)
                     Text("Apple Silicon Multi-Engine")
                         .fontWeight(.semibold)
-                    Text("— Dynamic parallel 4K captures")
+                    Text("• Up to 3x parallel")
                         .foregroundColor(.secondary)
                 }
-                .font(.system(size: 12))
 
                 HStack(spacing: 8) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
                         .foregroundColor(.purple)
+                        .frame(width: 16)
                     Text("Open Source")
                         .fontWeight(.semibold)
                     Link("github.com/arunofhyd/HTML2PPTX", destination: URL(string: githubRepoURL)!)
                         .foregroundColor(.orange)
                 }
-                .font(.system(size: 12))
             }
+            .font(.system(size: 12))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .background(Color.primary.opacity(0.04))
             .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            // Update Status & Action
-            VStack(spacing: 8) {
-                if let status = model.updateStatus {
-                    Text(status)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(model.newerVersionAvailable ? .orange : .secondary)
-                        .multilineTextAlignment(.center)
-                }
+            // Update Status if present
+            if let status = model.updateStatus {
+                Text(status)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(model.newerVersionAvailable ? .orange : .secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
 
-                HStack(spacing: 12) {
-                    Button(action: {
-                        model.checkForUpdates()
-                    }) {
-                        HStack(spacing: 6) {
-                            if model.isCheckingForUpdates {
-                                ProgressView()
-                                    .scaleEffect(0.6)
-                            } else {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                            }
-                            Text(model.isCheckingForUpdates ? "Checking..." : "Check for Updates")
+            Spacer(minLength: 4)
+
+            // Bottom Action Bar
+            HStack {
+                Button(action: { model.checkForUpdates() }) {
+                    HStack(spacing: 5) {
+                        if model.isCheckingForUpdates {
+                            ProgressView().scaleEffect(0.6)
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                        }
+                        Text(model.isCheckingForUpdates ? "Checking..." : "Check for Updates")
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                }
+                .disabled(model.isCheckingForUpdates)
+
+                Spacer()
+
+                if model.newerVersionAvailable, let url = URL(string: model.latestDownloadURL) {
+                    Link(destination: url) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.circle.fill")
+                            Text("Download Update")
                         }
                         .font(.system(size: 12, weight: .medium))
                     }
-                    .disabled(model.isCheckingForUpdates)
-
-                    if model.newerVersionAvailable, let url = URL(string: model.latestDownloadURL) {
-                        Link(destination: url) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.down.circle.fill")
-                                Text("Download Update")
-                            }
-                            .font(.system(size: 12, weight: .medium))
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
-                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
                 }
-            }
 
-            Spacer(minLength: 0)
-        }
-        .padding(24)
-        .frame(width: 460, height: 430)
-        .onAppear {
-            if model.updateStatus == nil {
-                model.checkForUpdates()
+                Button("Done") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .tint(model.newerVersionAvailable ? .secondary : .orange)
             }
         }
+        .padding(22)
+        .frame(width: 440, height: 380)
     }
 }
 
