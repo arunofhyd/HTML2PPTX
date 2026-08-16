@@ -348,7 +348,7 @@ class ConverterViewModel: ObservableObject {
                 let notifBody = totalFiles > 1
                     ? "\(createdPPTXURLs.count) presentations (\(grandTotalSlides) slides) in \(formatElapsedTime(finalElapsed))"
                     : "\(createdPPTXURLs[0].lastPathComponent) (\(grandTotalSlides) slides) in \(formatElapsedTime(finalElapsed))"
-                self.sendNativeNotification(title: "HTML to PPTX Converter", message: notifBody)
+                self.sendNativeNotification(title: "HTML2PPTX", message: notifBody)
                 NSSound(named: "Glass")?.play()
             } else {
                 self.state = .error(message: "Failed to create presentations. Check logs.")
@@ -625,7 +625,7 @@ struct HeaderView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("HTML to PPTX Converter")
+                Text("HTML2PPTX")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
 
@@ -643,7 +643,7 @@ struct HeaderView: View {
                     .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
-            .help("About HTML to PPTX Converter & Updates")
+            .help("About HTML2PPTX & Updates")
 
             // Status Pill with Timer
             statusPill
@@ -1061,8 +1061,8 @@ struct AboutSheetView: View {
                 }
 
                 VStack(spacing: 2) {
-                    Text("HTML to PPTX Converter")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                    Text("HTML2PPTX")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
 
                     Text("Version \(appVersion)")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))

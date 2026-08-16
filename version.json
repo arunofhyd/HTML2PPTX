@@ -1,7 +1,17 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "downloadURL": "https://github.com/arunofhyd/HTML2PPTX/releases/latest",
   "changelog": [
+    {
+      "version": "1.0.1",
+      "date": "2026-08-16",
+      "changes": [
+        "Standardized in-app title and branding to HTML2PPTX across all windows, dialogs, and notifications.",
+        "Fixed logo aspect ratio with perfectly balanced 1:1 true square un-squished geometry.",
+        "Compacted About/Info modal with streamlined vertical padding and clean bottom action bar.",
+        "Updated installer to configure the application bundle as HTML2PPTX.app."
+      ]
+    },
     {
       "version": "1.0.0",
       "date": "2026-08-16",
@@ -16,4 +26,3 @@
     }
   ]
 }
-
