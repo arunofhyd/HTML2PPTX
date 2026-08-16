@@ -114,8 +114,19 @@ rm -rf "$APP_TARGET"
 mkdir -p "$APP_TARGET/Contents/MacOS"
 mkdir -p "$APP_TARGET/Contents/Resources"
 
+# Single Source of Truth: Read version from version.json
+VERSION=$(python3 -c "import json, os; p = '$SRC_DIR/version.json'; print(json.load(open(p))['version']) if os.path.exists(p) else print('1.0.0')" 2>/dev/null || echo "1.0.0")
+
 cp "$BUILD_DIR/HTMLToPPTXConverter" "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
 cp "$SRC_DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"
+
+# Stamp Info.plist with version from version.json
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_TARGET/Contents/Info.plist" 2>/dev/null || \
+/usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" "$APP_TARGET/Contents/Info.plist" 2>/dev/null || true
+
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_TARGET/Contents/Info.plist" 2>/dev/null || \
+/usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $VERSION" "$APP_TARGET/Contents/Info.plist" 2>/dev/null || true
+
 cp "$SRC_DIR/converter_core.py" "$APP_TARGET/Contents/Resources/converter_core.py"
 cp "$SRC_DIR/AppIcon.icns" "$APP_TARGET/Contents/Resources/AppIcon.icns" 2>/dev/null || true
 cp "$SRC_DIR/AppIcon.png" "$APP_TARGET/Contents/Resources/AppLogo.png" 2>/dev/null || true
@@ -123,7 +134,7 @@ cp "$SRC_DIR/logo.svg" "$APP_TARGET/Contents/Resources/logo.svg" 2>/dev/null || 
 
 chmod +x "$APP_TARGET/Contents/MacOS/HTMLToPPTXConverter"
 chmod +x "$APP_TARGET/Contents/Resources/converter_core.py"
-ok "App bundle assembled at $APP_TARGET"
+ok "App bundle v$VERSION assembled at $APP_TARGET"
 
 # If CI mode, we stop here after creating the Build folder
 if [ "$CI" = "true" ]; then

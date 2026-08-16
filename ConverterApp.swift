@@ -3,8 +3,13 @@ import AppKit
 import UniformTypeIdentifiers
 import UserNotifications
 
-// MARK: - App Constants
-let appVersion = "1.0.0"
+// MARK: - App Constants (Single Source of Truth)
+let appVersion: String = {
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String, !version.isEmpty {
+        return version
+    }
+    return "1.0.0"
+}()
 let updateCheckURL = "https://raw.githubusercontent.com/arunofhyd/HTML2PPTX/main/version.json"
 let githubRepoURL = "https://github.com/arunofhyd/HTML2PPTX"
 
