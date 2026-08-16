@@ -10,3 +10,4 @@ node_modules/
 slides/
 __pycache__/
 *.pyc
+HTMLToPPTXConverter
