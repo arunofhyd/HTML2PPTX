@@ -1040,43 +1040,32 @@ struct AboutSheetView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Header with App Icon & Close X
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 10) {
-                    if let logo = logoImage {
-                        Image(nsImage: logo)
-                            .resizable()
-                            .interpolation(.high)
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 64, height: 64)
-                            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-                    }
-
-                    VStack(spacing: 3) {
-                        Text("HTML to PPTX Converter")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-
-                        Text("Version \(appVersion)")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .foregroundColor(.secondary)
-
-                        Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                    }
+            // Centered Header with App Icon, Title & Subtitle
+            VStack(spacing: 10) {
+                if let logo = logoImage {
+                    Image(nsImage: logo)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 64, height: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
-                .frame(maxWidth: .infinity)
 
-                // Top Right Circular Close Button
-                Button(action: { isPresented = false }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.secondary.opacity(0.6))
+                VStack(spacing: 3) {
+                    Text("HTML to PPTX Converter")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+
+                    Text("Version \(appVersion)")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(.secondary)
+
+                    Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.cancelAction)
             }
+            .frame(maxWidth: .infinity)
 
             Divider()
 
