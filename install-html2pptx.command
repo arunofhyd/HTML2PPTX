@@ -117,7 +117,7 @@ mkdir -p "$APP_TARGET/Contents/MacOS"
 mkdir -p "$APP_TARGET/Contents/Resources"
 
 # Single Source of Truth: Read version from version.json
-VERSION=$(python3 -c "import json, os; p = '$SRC_DIR/version.json'; print(json.load(open(p))['version']) if os.path.exists(p) else print('1.0.0')" 2>/dev/null || echo "1.0.0")
+VERSION=$(python3 -c "import json, os; p = '$SRC_DIR/version.json'; print(json.load(open(p))['version']) if os.path.exists(p) else print('1.0.2')" 2>/dev/null || echo "1.0.2")
 
 cp "$BUILD_DIR/HTML2PPTX" "$APP_TARGET/Contents/MacOS/HTML2PPTX"
 cp "$SRC_DIR/Info.plist" "$APP_TARGET/Contents/Info.plist"

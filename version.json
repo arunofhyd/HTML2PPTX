@@ -1,7 +1,14 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "downloadURL": "https://github.com/arunofhyd/HTML2PPTX/releases/latest",
   "changelog": [
+    {
+      "version": "1.0.2",
+      "date": "2026-08-21",
+      "changes": [
+        "Spacious About Window & In-App Auto-Updater: Upgraded About window layout with generous spacing and typography, integrated hardware-accelerated cumulative changelog alert, and direct 1-click in-app installer download."
+      ]
+    },
     {
       "version": "1.0.1",
       "date": "2026-08-16",

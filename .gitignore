@@ -11,3 +11,4 @@ slides/
 __pycache__/
 *.pyc
 HTMLToPPTXConverter
+HTML2PPTX

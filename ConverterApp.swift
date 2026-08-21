@@ -8,7 +8,7 @@ let appVersion: String = {
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String, !version.isEmpty {
         return version
     }
-    return "1.0.0"
+    return "1.0.2"
 }()
 let updateCheckURL = "https://raw.githubusercontent.com/arunofhyd/HTML2PPTX/main/version.json"
 let githubRepoURL = "https://github.com/arunofhyd/HTML2PPTX"
@@ -452,12 +452,14 @@ class ConverterViewModel: ObservableObject {
         }
     }
 
-    func checkForUpdates() {
+    func checkForUpdates(silentIfCurrent: Bool = false) {
         guard !isCheckingForUpdates else { return }
         isCheckingForUpdates = true
         updateStatus = "Checking for updates..."
 
-        guard let url = URL(string: "\(updateCheckURL)?t=\(Int(Date().timeIntervalSince1970))") else {
+        URLCache.shared.removeAllCachedResponses()
+        let ts = Int(Date().timeIntervalSince1970)
+        guard let url = URL(string: "\(updateCheckURL)?t=\(ts)") else {
             isCheckingForUpdates = false
             updateStatus = "Invalid update URL."
             return
@@ -465,6 +467,8 @@ class ConverterViewModel: ObservableObject {
 
         var request = URLRequest(url: url)
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.addValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.addValue("no-cache", forHTTPHeaderField: "Pragma")
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             Task { @MainActor in
@@ -473,6 +477,9 @@ class ConverterViewModel: ObservableObject {
 
                 if error != nil {
                     self.updateStatus = "✓ You are running the latest version (v\(appVersion))."
+                    if !silentIfCurrent {
+                        self.showUpdateResult(nil, changelog: "", newer: false)
+                    }
                     return
                 }
 
@@ -480,27 +487,111 @@ class ConverterViewModel: ObservableObject {
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let remoteVersion = json["version"] as? String else {
                     self.updateStatus = "✓ You are running the latest version (v\(appVersion))."
+                    if !silentIfCurrent {
+                        self.showUpdateResult(nil, changelog: "", newer: false)
+                    }
                     return
                 }
 
                 self.latestVersionNumber = remoteVersion
                 self.latestDownloadURL = (json["downloadURL"] as? String) ?? githubRepoURL
 
-                if let changelog = json["changelog"] as? [[String: Any]],
-                   let first = changelog.first,
-                   let changes = first["changes"] as? [String] {
-                    self.latestChangelog = changes.map { "• \($0)" }.joined(separator: "\n")
+                var fullChangelog = ""
+                if let changelog = json["changelog"] as? [[String: Any]] {
+                    let unreadEntries = changelog.filter { entry in
+                        if let v = entry["version"] as? String {
+                            return self.isVersion(v, newerThan: appVersion)
+                        }
+                        return false
+                    }
+                    fullChangelog = unreadEntries.compactMap { entry -> String? in
+                        guard let v = entry["version"] as? String,
+                              let changes = entry["changes"] as? [String] else { return nil }
+                        let changeList = changes.map { "•  \($0)" }.joined(separator: "\n")
+                        return "Version \(v):\n\(changeList)"
+                    }.joined(separator: "\n\n")
+                    self.latestChangelog = fullChangelog
                 }
 
-                if self.isVersion(remoteVersion, newerThan: appVersion) {
-                    self.newerVersionAvailable = true
+                let isNewer = self.isVersion(remoteVersion, newerThan: appVersion)
+                self.newerVersionAvailable = isNewer
+
+                if isNewer {
                     self.updateStatus = "New version v\(remoteVersion) is available!"
+                    self.showUpdateResult(remoteVersion, changelog: fullChangelog, newer: true)
                 } else {
-                    self.newerVersionAvailable = false
                     self.updateStatus = "You are on the latest version (v\(appVersion))."
+                    if !silentIfCurrent {
+                        self.showUpdateResult(remoteVersion, changelog: fullChangelog, newer: false)
+                    }
                 }
             }
         }.resume()
+    }
+
+    func showUpdateResult(_ remote: String?, changelog: String, newer: Bool) {
+        let alert = NSAlert()
+        NSApp.activate(ignoringOtherApps: true)
+        if let logo = getBrandLogo(size: 64) {
+            alert.icon = logo
+        }
+        if newer, let remote = remote {
+            alert.messageText = "HTML2PPTX \(remote) is available"
+            alert.informativeText = "You have v\(appVersion). Here's what's new:"
+            if !changelog.isEmpty {
+                alert.accessoryView = createChangelogView(changelog: changelog)
+            }
+            alert.addButton(withTitle: "Update Now")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                downloadAndInstallUpdate()
+            }
+        } else {
+            alert.messageText = "You're up to date"
+            alert.informativeText = "HTML2PPTX v\(appVersion) is the latest version."
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    func downloadAndInstallUpdate() {
+        let commandURL = "https://raw.githubusercontent.com/arunofhyd/HTML2PPTX/main/install-html2pptx.command"
+        guard let url = URL(string: commandURL) else { return }
+
+        let task = URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            DispatchQueue.main.async {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if error != nil || statusCode != 200 {
+                    let err = NSAlert()
+                    err.alertStyle = .warning
+                    err.messageText = "Update Download Failed"
+                    err.informativeText = "Could not download the update (HTTP \(statusCode)). Please visit GitHub to download manually."
+                    err.addButton(withTitle: "Open GitHub")
+                    err.addButton(withTitle: "OK")
+                    if err.runModal() == .alertFirstButtonReturn {
+                        if let u = URL(string: githubRepoURL) { NSWorkspace.shared.open(u) }
+                    }
+                    return
+                }
+                guard let tempURL = tempURL else { return }
+                let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
+                let destURL = downloads.appendingPathComponent("install-html2pptx.command")
+                do {
+                    try? FileManager.default.removeItem(at: destURL)
+                    try FileManager.default.copyItem(at: tempURL, to: destURL)
+                    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destURL.path)
+                    NSWorkspace.shared.open(destURL)
+                } catch {
+                    let err = NSAlert()
+                    err.alertStyle = .warning
+                    err.messageText = "Could Not Save Installer"
+                    err.informativeText = "The installer was downloaded but couldn't be saved:\n\(error.localizedDescription)"
+                    err.addButton(withTitle: "OK")
+                    err.runModal()
+                }
+            }
+        }
+        task.resume()
     }
 
     private func isVersion(_ remote: String, newerThan current: String) -> Bool {
@@ -1044,139 +1135,188 @@ struct LogsSheetView: View {
 }
 
 // MARK: - About & Info Sheet View
+
+struct UpdateChangelogView: View {
+    let changelog: String
+
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(changelog)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(Color(NSColor.labelColor))
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(12)
+        }
+        .frame(width: 360, height: 150)
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color(NSColor.separatorColor).opacity(0.4), lineWidth: 1)
+        )
+    }
+}
+
+func createChangelogView(changelog: String) -> NSView {
+    let hostingView = NSHostingView(rootView: UpdateChangelogView(changelog: changelog))
+    hostingView.frame = NSRect(x: 0, y: 0, width: 360, height: 150)
+    return hostingView
+}
+
 struct AboutSheetView: View {
     @ObservedObject var model: ConverterViewModel
     @Binding var isPresented: Bool
 
+    struct FeatureItem: Identifiable {
+        let id = UUID()
+        let symbol: String
+        let color: Color
+        let title: String
+        let desc: String
+    }
+
+    let features: [FeatureItem] = [
+        FeatureItem(symbol: "bolt.fill", color: .orange, title: "Ultra-Fast HTML to PPTX", desc: "Converts HTML, Marp, and Markdown slide decks into native 4K PowerPoint presentations."),
+        FeatureItem(symbol: "lock.shield.fill", color: .green, title: "100% On-Device & Private", desc: "Entire conversion runs locally using WebKit & Python — zero cloud uploads or telemetry."),
+        FeatureItem(symbol: "cpu.fill", color: .blue, title: "Apple Silicon Multi-Engine", desc: "Multi-threaded parallel WebKit extraction and rendering at maximum ProMotion speed."),
+        FeatureItem(symbol: "chevron.left.forwardslash.chevron.right", color: .pink, title: "Free & Open Source", desc: "HTML2PPTX is completely free and open source. Check out the project repository on GitHub.")
+    ]
+
     var body: some View {
-        VStack(spacing: 11) {
-            // Centered Header with App Icon, Title & Subtitle
+        VStack(spacing: 0) {
+            // Header
             VStack(spacing: 6) {
-                if let logo = getBrandLogo(size: 52) {
+                if let logo = getBrandLogo(size: 64) {
                     Image(nsImage: logo)
                         .resizable()
                         .interpolation(.high)
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 52, height: 52)
+                        .frame(width: 64, height: 64)
                 }
 
-                VStack(spacing: 2) {
-                    Text("HTML2PPTX")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("HTML2PPTX")
+                    .font(.system(size: 24, weight: .bold))
 
-                    Text("Version \(appVersion)")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
+                Text("Version \(appVersion)")
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.8))
 
-                    Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(maxWidth: .infinity)
-
-            Divider()
-
-            // Info Details Card
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .foregroundColor(.orange)
-                        .frame(width: 16)
-                    Text("Built with ❤️ by")
-                        .foregroundColor(.secondary)
-                    Text("Arun Thomas")
-                        .fontWeight(.semibold)
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "lock.shield.fill")
-                        .foregroundColor(.green)
-                        .frame(width: 16)
-                    Text("100% On-Device")
-                        .fontWeight(.semibold)
-                    Text("• Zero cloud uploads")
-                        .foregroundColor(.secondary)
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "cpu.fill")
-                        .foregroundColor(.blue)
-                        .frame(width: 16)
-                    Text("Apple Silicon Multi-Engine")
-                        .fontWeight(.semibold)
-                    Text("• Up to 3x parallel")
-                        .foregroundColor(.secondary)
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.left.forwardslash.chevron.right")
-                        .foregroundColor(.purple)
-                        .frame(width: 16)
-                    Text("Open Source")
-                        .fontWeight(.semibold)
-                    Link("github.com/arunofhyd/HTML2PPTX", destination: URL(string: githubRepoURL)!)
-                        .foregroundColor(.orange)
-                }
-            }
-            .font(.system(size: 11.5))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(Color.primary.opacity(0.04))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-
-            // Update Status if present
-            if let status = model.updateStatus {
-                Text(status)
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundColor(model.newerVersionAvailable ? .orange : .secondary)
+                Text("High-Performance HTML Presentation to 4K PowerPoint Engine")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
+                    .padding(.horizontal, 24)
             }
+            .padding(.top, 28)
+            .padding(.bottom, 20)
 
-            // Bottom Action Bar
-            HStack {
-                Button(action: { model.checkForUpdates() }) {
-                    HStack(spacing: 5) {
+            // Features List
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(features) { f in
+                    HStack(alignment: .top, spacing: 14) {
+                        Image(systemName: f.symbol)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(f.color)
+                            .frame(width: 26, height: 26)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(f.title)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.primary)
+
+                            Text(f.desc)
+                                .font(.system(size: 11.5, weight: .regular))
+                                .foregroundColor(.secondary)
+                                .lineSpacing(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 34)
+            .padding(.vertical, 10)
+
+            Spacer(minLength: 20)
+
+            // Author Note
+            Text("Built by Arun Thomas")
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundColor(.secondary)
+                .padding(.bottom, 16)
+
+            // Action Buttons
+            HStack(spacing: 10) {
+                Button(action: {
+                    let subject = "HTML2PPTX feedback"
+                    let encoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
+                    if let url = URL(string: "mailto:arunthomas04042001@gmail.com?subject=\(encoded)") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    Text("Contact")
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundColor(.black)
+                        .frame(width: 96, height: 34)
+                        .background(Color.white)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    if let url = URL(string: githubRepoURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    Text("GitHub")
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 96, height: 34)
+                        .background(Color.black)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    model.checkForUpdates()
+                }) {
+                    HStack(spacing: 4) {
                         if model.isCheckingForUpdates {
-                            ProgressView().scaleEffect(0.6)
+                            ProgressView().scaleEffect(0.5)
                         } else {
                             Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 10, weight: .bold))
                         }
-                        Text(model.isCheckingForUpdates ? "Checking..." : "Check for Updates")
+                        Text("Updates")
+                            .font(.system(size: 12.5, weight: .medium))
                     }
-                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 96, height: 34)
+                    .background(Color.secondary.opacity(0.35))
+                    .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
                 .disabled(model.isCheckingForUpdates)
 
-                Spacer()
-
-                if model.newerVersionAvailable, let url = URL(string: model.latestDownloadURL) {
-                    Link(destination: url) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.down.circle.fill")
-                            Text("Download Update")
-                        }
-                        .font(.system(size: 11.5, weight: .medium))
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                }
-
-                Button("Done") {
+                Button(action: {
                     isPresented = false
+                }) {
+                    Text("Done")
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 104, height: 34)
+                        .background(Color.orange)
+                        .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
                 .keyboardShortcut(.defaultAction)
-                .keyboardShortcut(.cancelAction)
-                .buttonStyle(.borderedProminent)
-                .tint(model.newerVersionAvailable ? .secondary : .orange)
             }
-            .padding(.top, 2)
+            .padding(.bottom, 28)
         }
-        .padding(18)
-        .frame(width: 420, height: 320)
+        .frame(width: 490, height: 570)
     }
 }
 

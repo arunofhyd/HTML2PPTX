@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 APP_TARGET="/Users/arunthomas/Downloads/Presentation/HTML2PPTX.app"
 
 # Single Source of Truth: Read version from version.json
-VERSION=$(python3 -c "import json, os; p = '$DIR/version.json' if os.path.exists('$DIR/version.json') else '/Users/arunthomas/HTML2PPTX/version.json'; print(json.load(open(p))['version'])" 2>/dev/null || echo "1.0.0")
+VERSION=$(python3 -c "import json, os; p = '$DIR/version.json' if os.path.exists('$DIR/version.json') else '/Users/arunthomas/HTML2PPTX/version.json'; print(json.load(open(p))['version'])" 2>/dev/null || echo "1.0.2")
 echo "🔖 Building HTML2PPTX v$VERSION..."
 
 echo "🔨 Compiling SwiftUI Binary..."
@@ -39,3 +39,9 @@ chmod +x "$APP_TARGET/Contents/Resources/converter_core.py"
 ln -s "$APP_TARGET" "/Users/arunthomas/Downloads/Presentation/HTML to PPTX Converter.app" 2>/dev/null || true
 
 echo "✨ Native Swift App HTML2PPTX v$VERSION successfully built!"
+
+# Install to /Applications
+DEST="/Applications/HTML2PPTX.app"
+pkill -x "HTML2PPTX" 2>/dev/null || true
+rm -rf "" 2>/dev/null || true
+cp -R "" "" 2>/dev/null || true
